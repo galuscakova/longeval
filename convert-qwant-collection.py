@@ -8,7 +8,7 @@ import spacy
 
 nlp = spacy.load('fr_core_news_sm')
 
-prefix = "0422"
+prefix = "0722"
 prefix = sys.argv[1]
 directory = sys.argv[2]
 output_directory = sys.argv[3]
@@ -34,6 +34,7 @@ fileid = 1
 output = []
 processed_urls = []
 mapped_output = ""
+time_output = ""
 trec_output = ""
 no_adult_urls = []
 spam_removed_urls = []
@@ -59,15 +60,28 @@ for filename in filenames:
         document = json.loads(line)
         url = document['url']
 
+        downloaded_time = document['created_at']
+        updated_time = document['last_updated_at']
+
+        #print(url)
+
+        # Remove duplicates
         if url in processed_urls:
+            #print("duplicate")
             continue
 
         # Remove adult content
+        # Implementation for 06: 
         if url in spam_removed_urls:
+            #print("spam")
             continue
+        
+        if not (url in no_adult_urls):
+            #print("adult")
+            continue
+        # For 07, 09 too much content is removed
 
-        if not url in no_adult_urls:
-            continue
+        #print("processing")
 
         documentid_formatted = "{:03d}".format(int(documentid))
         fileid_formatted = "{:05d}".format(int(fileid))
@@ -82,6 +96,14 @@ for filename in filenames:
         if ("map" in output_format):
             mapped_line = newid + "\t" + url + "\n"
             mapped_output = mapped_output + mapped_line
+
+        if ("time" in output_format):
+
+            downloaded_time_formatted = datetime.datetime.utcfromtimestamp(downloaded_time).strftime('%Y-%m-%dT%H:%M:%SZ')
+            updated_time_formatted = datetime.datetime.utcfromtimestamp(updated_time).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+            time_line = newid + "\t" + downloaded_time_formatted + "\t" + updated_time_formatted + "\n"
+            time_output = time_output + time_line
 
         if ("trec" in output_format):
             trec_outputl = ""
@@ -122,6 +144,9 @@ for filename in filenames:
     if ("map" in output_format):
         final_output = mapped_output
 
+    if ("time" in output_format):
+        final_output = time_output
+
     if ("trec" in output_format):
         final_output = trec_output
 
@@ -133,4 +158,5 @@ for filename in filenames:
     output = []
     mapped_output = ""
     trec_output = ""
+    time_output = ""
 
